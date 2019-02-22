@@ -11,10 +11,15 @@ end
 define_target 'vizor-platform-library' do |target|
 	target.depends 'Language/C++14'
 	
-	target.provides 'Library/VizorPlatform' do
+	target.depends 'Library/Vizor', public: true
+	
+	target.depends 'Library/Streams'
+	target.depends 'Library/Time'
+	
+	target.provides 'Library/Vizor/Platform' do
 		source_root = target.package.path + 'source'
 		
-		library_path = build static_library: 'VizorPlatform', source_files: source_root.glob('VizorPlatform/**/*.cpp')
+		library_path = build static_library: 'VizorPlatform', source_files: source_root.glob('Vizor/Platform/**/*.{cpp}')
 		
 		append linkflags library_path
 		append header_search_paths source_root
@@ -22,37 +27,15 @@ define_target 'vizor-platform-library' do |target|
 end
 
 define_target 'vizor-platform-test' do |target|
-	target.depends 'Library/VizorPlatform'
+	target.depends 'Library/Vizor/Platform'
 	target.depends 'Library/UnitTest'
 	
 	target.depends 'Language/C++14'
 	
-	target.provides 'Test/VizorPlatform' do |arguments|
+	target.provides 'Test/Vizor/Platform' do |arguments|
 		test_root = target.package.path + 'test'
 		
-		run tests: 'VizorPlatform', source_files: test_root.glob('VizorPlatform/**/*.cpp'), arguments: arguments
-	end
-end
-
-define_target 'vizor-platform-executable' do |target|
-	target.depends 'Library/VizorPlatform'
-	
-	target.depends 'Language/C++14'
-	
-	target.provides 'Executable/VizorPlatform' do
-		source_root = target.package.path + 'source'
-		
-		build executable: 'VizorPlatform', source_files: source_root.glob('VizorPlatform.cpp')
-	end
-end
-
-define_target 'vizor-platform-run' do |target|
-	target.depends 'Executable/VizorPlatform'
-	
-	target.depends :executor
-	
-	target.provides 'Run/VizorPlatform' do |*arguments|
-		run executable: 'VizorPlatform', arguments: arguments
+		run tests: 'VizorPlatform', source_files: test_root.glob('Vizor/Platform/**/*.cpp'), arguments: arguments
 	end
 end
 
@@ -72,9 +55,10 @@ define_configuration 'development' do |configuration|
 	configuration.require 'generate-cpp-class'
 	
 	configuration.require "generate-project"
-	configuration.require "vizor"
 end
 
 define_configuration "vizor-platform" do |configuration|
 	configuration.public!
+	
+	configuration.require "vizor"
 end

@@ -1,4 +1,0 @@
-
-namespace VizorPlatform {
-	void sing();
-}
