@@ -35,6 +35,11 @@ namespace Vizor
 		{
 		}
 		
+		Scale Window::scale() const
+		{
+			return 1.0;
+		}
+		
 		void Window::render(const Time::Interval & at)
 		{
 		}

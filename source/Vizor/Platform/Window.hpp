@@ -45,7 +45,7 @@ namespace Vizor
 			virtual vk::Extent2D size() const = 0;
 			
 			// The scale a pixel w.r.t. the physical display.
-			virtual Scale scale() const = 0;
+			virtual Scale scale() const;
 			
 			// Render a frame, which will be displayed at the given time.
 			virtual void render(const Time::Interval & at);
