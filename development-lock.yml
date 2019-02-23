@@ -78,5 +78,5 @@ parallel:
   :commit: fdedc8c032f2348945aed51d8b20a9e8aacee0a9
   :branch: master
 input:
-  :commit: 37735ff2003f395322b6cb80aa423e00b66ef3f0
+  :commit: 2c525047559ec235310f5ce26065d9f256f7e57c
   :branch: master
