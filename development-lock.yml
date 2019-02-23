@@ -3,7 +3,7 @@ generate-project:
   :commit: 6e1213ac380ddf82a7e96c0798d2beb55cf11db7
   :branch: master
 vizor:
-  :commit: 7d1a87ed77327839b8b7fed1ccc117c3ef4964c4
+  :commit: d46b02f8a3eb5ea048152e2b79ab6e1209cbfec5
   :branch: master
 generate-template:
   :commit: ad0dcfb6da64cc0508b71916b30e1050c82ecea7
@@ -55,4 +55,25 @@ build-files:
   :branch: master
 streams:
   :commit: dc8b15f98e04ec3661d530b87d87b072a4d2c997
+  :branch: master
+numerics:
+  :commit: 98c501c0b0b6cb5db6dc592f06b650baf42188c5
+  :branch: master
+geometry:
+  :commit: cfef749acdb1009e22fbcf0700ef7a3ee35f3aa3
+  :branch: master
+concurrent:
+  :commit: 7402f8028caa1fea7046f1e9a3d48ac655140195
+  :branch: master
+coroutine:
+  :commit: 3e4a72bf1bb4c03e4e4f569fe5ec4b52b51c7875
+  :branch: master
+generate-travis:
+  :commit: 25acb6c2650d6818d1055c33d8e307d3b6be0f74
+  :branch: master
+coroutine-amd64:
+  :commit: 4d95747b7ac74a19546f7c1290ec34c85ca97076
+  :branch: master
+parallel:
+  :commit: 1f0c4d8894f35d4a7d7bca57d6820b29ab17b18e
   :branch: master
