@@ -17,20 +17,11 @@ namespace Vizor
 		class Window : public Context
 		{
 		public:
-			Window(const Context & context) : Context(context) {}
+			Window(const Application & application, const Context & context) : Context(context) {}
 			virtual ~Window();
 			
 			vk::SurfaceKHR surface();
 			
-			// #if defined(VK_USE_PLATFORM_MACOS_MVK)
-			// 		extensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
-			// #elif defined(VK_USE_PLATFORM_XCB_KHR)
-			// 		extensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
-			// #elif defined(VK_USE_PLATFORM_WIN32_KHR)
-			// 		extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
-			// #else
-			// #error "Unsupported platform!"
-			// #endif
 			virtual void prepare(Layers & layers, Extensions & extensions);
 			
 			virtual vk::Extent2D size() = 0;
