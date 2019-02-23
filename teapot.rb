@@ -16,9 +16,7 @@ define_target 'vizor-platform-library' do |target|
 	target.depends 'Library/Streams'
 	target.depends 'Library/Time'
 	
-	target.depends 'Library/Parallel', public: true
-	target.depends 'Library/Numerics', public: true
-	target.depends 'Library/Geometry', public: true
+	target.depends 'Library/Input', public: true
 	
 	target.provides 'Library/Vizor/Platform' do
 		source_root = target.package.path + 'source'
@@ -66,8 +64,5 @@ define_configuration "vizor-platform" do |configuration|
 	
 	configuration.require "vizor"
 	
-	configuration.require "numerics"
-	configuration.require "geometry"
-	
-	configuration.require "parallel"
+	configuration.require "input"
 end
