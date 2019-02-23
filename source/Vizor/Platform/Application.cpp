@@ -24,7 +24,7 @@ namespace Vizor
 		{
 		}
 		
-		virtual bool Application::will_terminate()
+		bool Application::will_terminate()
 		{
 			return true;
 		}

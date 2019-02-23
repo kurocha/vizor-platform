@@ -24,5 +24,19 @@ namespace Vizor
 			
 			return _surface.get();
 		}
+		
+		// Indicates the window will entered the background with respect to other windows.
+		void Window::will_enter_background()
+		{
+		}
+		
+		// Indicates the window has entered the foreground with respect to other windows.
+		void Window::did_enter_foreground()
+		{
+		}
+		
+		void Window::render(const Time::Interval & at)
+		{
+		}
 	}
 }

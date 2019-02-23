@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <Vizor/Context.hpp>
+
 namespace Vizor
 {
 	namespace Platform

@@ -8,13 +8,18 @@
 
 #pragma once
 
-#include <Vizor/Context.hpp>
+#include "Application.hpp"
+
+#include <Time/Interval.hpp>
+#include <Input/Handler.hpp>
 
 namespace Vizor
 {
 	namespace Platform
 	{
-		class Window : public Context
+		using Scale = float;
+		
+		class Window : public Context, public Input::Handler
 		{
 		public:
 			Window(const Application & application, const Context & context) : Context(context) {}
@@ -22,9 +27,28 @@ namespace Vizor
 			
 			vk::SurfaceKHR surface();
 			
+			// Show the window.
+			virtual void show() = 0;
+			
+			// Hide the window.
+			virtual void hide() = 0;
+			
+			// Indicates the window will entered the background with respect to other windows.
+			virtual void will_enter_background();
+			
+			// Indicates the window has entered the foreground with respect to other windows.
+			virtual void did_enter_foreground();
+			
 			virtual void prepare(Layers & layers, Extensions & extensions);
 			
-			virtual vk::Extent2D size() = 0;
+			// The size of the window, in pixels.
+			virtual vk::Extent2D size() const = 0;
+			
+			// The scale a pixel w.r.t. the physical display.
+			virtual Scale scale() const = 0;
+			
+			// Render a frame, which will be displayed at the given time.
+			virtual void render(const Time::Interval & at);
 			
 		protected:
 			virtual void setup_surface() = 0;
