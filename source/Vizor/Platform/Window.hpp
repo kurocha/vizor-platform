@@ -39,7 +39,7 @@ namespace Vizor
 			// Indicates the window has entered the foreground with respect to other windows.
 			virtual void did_enter_foreground();
 			
-			virtual void prepare(Layers & layers, Extensions & extensions);
+			virtual void prepare(Layers & layers, Extensions & extensions) = 0;
 			
 			// The size of the window, in pixels.
 			virtual vk::Extent2D size() const = 0;
