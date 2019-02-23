@@ -14,8 +14,6 @@ define_target 'vizor-platform-library' do |target|
 	target.depends 'Library/Vizor', public: true
 	
 	target.depends 'Library/Streams'
-	target.depends 'Library/Time'
-	
 	target.depends 'Library/Input', public: true
 	
 	target.provides 'Library/Vizor/Platform' do
