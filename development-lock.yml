@@ -18,10 +18,10 @@ memory:
   :commit: 28dd0f2e1d1418ed8f038e6c19fff7c9e45ac135
   :branch: master
 vulkan-sdk:
-  :commit: fdc0af3b19d1982ada58076fa26ae5ae297d9d0d
+  :commit: 460386d64e7f39c6ec8efc2bc5a44b04de3b3f64
   :branch: master
 vulkan-sdk-darwin:
-  :commit: e6c4fa3d72bfc0f75e6f6fb6c53cf0a9a2da9546
+  :commit: bbefe4e32854a38cc376b43062a0ca8ff5d14acf
   :branch: master
 time:
   :commit: 9dae349ec5fc45fa8f837412b6de357a88c85286
@@ -57,10 +57,10 @@ streams:
   :commit: dc8b15f98e04ec3661d530b87d87b072a4d2c997
   :branch: master
 numerics:
-  :commit: 98c501c0b0b6cb5db6dc592f06b650baf42188c5
+  :commit: f4227323b5035c89e41490f5cc8f87797b670fad
   :branch: master
 geometry:
-  :commit: cfef749acdb1009e22fbcf0700ef7a3ee35f3aa3
+  :commit: 268e4f6f7ca5d72676cad662e64bf78bab1082c7
   :branch: master
 concurrent:
   :commit: 7402f8028caa1fea7046f1e9a3d48ac655140195
@@ -75,5 +75,5 @@ coroutine-amd64:
   :commit: 4d95747b7ac74a19546f7c1290ec34c85ca97076
   :branch: master
 parallel:
-  :commit: 1f0c4d8894f35d4a7d7bca57d6820b29ab17b18e
+  :commit: fdedc8c032f2348945aed51d8b20a9e8aacee0a9
   :branch: master
