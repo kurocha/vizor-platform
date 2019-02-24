@@ -12,6 +12,7 @@ define_target 'vizor-platform-library' do |target|
 	target.depends 'Language/C++14'
 	
 	target.depends 'Library/Vizor', public: true
+	target.depends :display_native, public: true
 	
 	target.depends 'Library/Streams'
 	target.depends 'Library/Input', public: true
@@ -63,4 +64,12 @@ define_configuration "vizor-platform" do |configuration|
 	configuration.require "vizor"
 	
 	configuration.require "input"
+	
+	host /darwin/ do
+		configuration.require "display-cocoa"
+	end
+	
+	host /linux/ do
+		configuration.require "display-xcb"
+	end
 end

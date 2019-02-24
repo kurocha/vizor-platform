@@ -2,56 +2,34 @@
 //  Window.hpp
 //  This file is part of the "Vizor Platform" project and released under the .
 //
-//  Created by Samuel Williams on 19/2/2019.
+//  Created by Samuel Williams on 24/2/2019.
 //  Copyright, 2019, by Samuel Williams. All rights reserved.
 //
 
 #pragma once
 
-#include "Application.hpp"
-
-#include <Time/Interval.hpp>
-#include <Input/Handler.hpp>
+#include <Display/Native.hpp>
+#include <Vizor/Context.hpp>
 
 namespace Vizor
 {
 	namespace Platform
 	{
-		using Scale = float;
+		using namespace Display;
 		
-		class Window : public Context, public Input::Handler
+		class Window : public Context, public Native::Window
 		{
 		public:
-			Window(const Application & application, const Context & context) : Context(context) {}
+			template<typename... Args>
+			Window(const Context & context, Args&&... args) : Context(context), Native::Window(std::forward<Args>(args)...) {}
 			virtual ~Window();
 			
 			vk::SurfaceKHR surface();
 			
-			// Show the window.
-			virtual void show() = 0;
-			
-			// Hide the window.
-			virtual void hide() = 0;
-			
-			// Indicates the window will entered the background with respect to other windows.
-			virtual void will_enter_background();
-			
-			// Indicates the window has entered the foreground with respect to other windows.
-			virtual void did_enter_foreground();
-			
-			virtual void prepare(Layers & layers, Extensions & extensions) = 0;
-			
-			// The size of the window, in pixels.
-			virtual vk::Extent2D size() const = 0;
-			
-			// The scale a pixel w.r.t. the physical display.
-			virtual Scale scale() const;
-			
-			// Render a frame, which will be displayed at the given time.
-			virtual void render(const Time::Interval & at);
+			virtual void prepare(Layers & layers, Extensions & extensions) const noexcept;
 			
 		protected:
-			virtual void setup_surface() = 0;
+			void setup_surface();
 			
 			vk::UniqueSurfaceKHR _surface;
 		};

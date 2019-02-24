@@ -21,7 +21,7 @@ vulkan-sdk:
   :commit: 460386d64e7f39c6ec8efc2bc5a44b04de3b3f64
   :branch: master
 vulkan-sdk-darwin:
-  :commit: bbefe4e32854a38cc376b43062a0ca8ff5d14acf
+  :commit: ffb66916fe990e03c506145d0b3e47a246520e51
   :branch: master
 time:
   :commit: 9dae349ec5fc45fa8f837412b6de357a88c85286
@@ -75,8 +75,14 @@ coroutine-amd64:
   :commit: 4d95747b7ac74a19546f7c1290ec34c85ca97076
   :branch: master
 parallel:
-  :commit: fdedc8c032f2348945aed51d8b20a9e8aacee0a9
+  :commit: 70fd29c05588bc153a79af2cc0fa92606a1f973f
   :branch: master
 input:
-  :commit: 2c525047559ec235310f5ce26065d9f256f7e57c
+  :commit: 82a08439b86d5ebadedc924b884852a9cb8075fe
+  :branch: master
+display-cocoa:
+  :commit: deb28e565e1a2d4a69097bdef0aee8ccb02cad55
+  :branch: master
+display:
+  :commit: 5cfca4fd578ba69a0220a6922f6139fe2615540c
   :branch: master

@@ -2,11 +2,15 @@
 //  Window.cpp
 //  This file is part of the "Vizor Platform" project and released under the .
 //
-//  Created by Samuel Williams on 19/2/2019.
+//  Created by Samuel Williams on 24/2/2019.
 //  Copyright, 2019, by Samuel Williams. All rights reserved.
 //
 
 #include "Window.hpp"
+
+#ifdef VK_USE_PLATFORM_MACOS_MVK
+#include <vulkan/vulkan_macos.h>
+#endif
 
 namespace Vizor
 {
@@ -25,23 +29,25 @@ namespace Vizor
 			return _surface.get();
 		}
 		
-		// Indicates the window will entered the background with respect to other windows.
-		void Window::will_enter_background()
+		void Window::prepare(Layers & layers, Extensions & extensions) const noexcept
 		{
+#ifdef VK_USE_PLATFORM_MACOS_MVK
+			extensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
+#else
+#error "Unsupported Platform!"
+#endif
 		}
 		
-		// Indicates the window has entered the foreground with respect to other windows.
-		void Window::did_enter_foreground()
+		void Window::setup_surface()
 		{
-		}
-		
-		Scale Window::scale() const
-		{
-			return 1.0;
-		}
-		
-		void Window::render(const Time::Interval & at)
-		{
+#ifdef VK_USE_PLATFORM_MACOS_MVK
+			auto surface_create_info = vk::MacOSSurfaceCreateInfoMVK()
+				.setPView(_view);
+			
+			_surface = _instance.createMacOSSurfaceMVKUnique(surface_create_info, _allocation_callbacks);
+#else
+#error "Unsupported Platform!"
+#endif
 		}
 	}
 }
