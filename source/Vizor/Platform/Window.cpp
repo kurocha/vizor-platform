@@ -27,7 +27,9 @@ namespace Vizor
 		vk::SurfaceKHR Window::surface()
 		{
 			if (!_surface) {
+				Console::info("setup_surface()");
 				setup_surface();
+				Console::info("setup_surface() ->", _surface.get());
 			}
 			
 			return _surface.get();

@@ -8,10 +8,14 @@
 
 #include "SurfaceDevice.hpp"
 
+#include <Logger/Console.hpp>
+
 namespace Vizor
 {
 	namespace Platform
 	{
+		using namespace Logger;
+		
 		SurfaceDevice::~SurfaceDevice()
 		{
 		}
@@ -19,7 +23,7 @@ namespace Vizor
 		vk::SurfaceKHR SurfaceDevice::surface()
 		{
 			if (!_surface) {
-				GraphicsDevice::setup_device();
+				_surface = _window.surface();
 			}
 			
 			return _surface;
@@ -27,6 +31,7 @@ namespace Vizor
 		
 		void SurfaceDevice::prepare(Layers & layers, Extensions & extensions) const noexcept
 		{
+			Console::info("prepare(layers, extensions)");
 			GraphicsDevice::prepare(layers, extensions);
 			
 			if (_enable_swapchain) {
@@ -38,7 +43,8 @@ namespace Vizor
 		
 		void SurfaceDevice::setup_queues()
 		{
-			auto surface = _window.surface();
+			Console::info("setup_queues()");
+			auto surface = this->surface();
 			
 			auto queue_family_properties = _physical_device.getQueueFamilyProperties();
 			
@@ -62,6 +68,8 @@ namespace Vizor
 				}
 			}
 			
+			Console::info("setup_queues() ->", _graphics_queue_family_index, _present_queue_family_index);
+			
 			if (_graphics_queue_family_index == -1) {
 				throw std::runtime_error("Could not find graphics queue!");
 			}
@@ -73,6 +81,7 @@ namespace Vizor
 		
 		void SurfaceDevice::setup_device(Layers & layers, Extensions & extensions)
 		{
+			Console::info("setup_device(layers, extensions)");
 			float queue_priority = 1.0f;
 			
 			setup_queues();
@@ -80,8 +89,7 @@ namespace Vizor
 			std::size_t queue_count = (_graphics_queue_family_index == _present_queue_family_index) ? 1 : 2;
 			vk::DeviceQueueCreateInfo queue_create_infos[queue_count];
 			
-			std::size_t index = 0;
-			while (index < queue_count) {
+			for (std::size_t index = 0; index < queue_count; index += 1) {
 				auto queue_family_index = index == 0 ? _graphics_queue_family_index : _present_queue_family_index;
 				
 				queue_create_infos[index]

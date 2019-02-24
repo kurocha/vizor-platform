@@ -70,6 +70,11 @@ namespace Vizor
 		
 		void Swapchain::setup_surface_format()
 		{
+			Console::info("setup_surface_format()",
+				"Physical Device:", _physical_device,
+				"Surface:", _surface
+			);
+			
 			_surface_format = select_surface_format(
 				_physical_device.getSurfaceFormatsKHR(_surface)
 			);
@@ -77,6 +82,11 @@ namespace Vizor
 		
 		void Swapchain::setup_present_mode()
 		{
+			Console::info("setup_present_mode()",
+				"Physical Device:", _physical_device,
+				"Surface:", _surface
+			);
+			
 			_present_mode = select_present_mode(
 				_physical_device.getSurfacePresentModesKHR(_surface)
 			);
@@ -96,6 +106,8 @@ namespace Vizor
 			if (capabilities.maxImageCount > 0 && image_count > capabilities.maxImageCount) {
 				image_count = capabilities.maxImageCount;
 			}
+			
+			Console::info("Setting up swapchain with", image_count, "images...");
 			
 			auto swapchain_create_info = vk::SwapchainCreateInfoKHR()
 				.setSurface(_surface)
@@ -166,6 +178,8 @@ namespace Vizor
 					image,
 					_device.createImageViewUnique(image_view_create_info, _allocation_callbacks)
 				});
+				
+				Console::info("Allocating swapchain image", image, _buffers.back().image_view.get());
 			}
 		}
 	}

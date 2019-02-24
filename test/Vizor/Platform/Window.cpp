@@ -14,10 +14,14 @@
 #include <Vizor/Platform/SurfaceDevice.hpp>
 #include <Vizor/Platform/Swapchain.hpp>
 
+#include <Logger/Console.hpp>
+
 namespace Vizor
 {
 	namespace Platform
 	{
+		using namespace Logger;
+		
 		class ShowWindowApplication : public Native::Application
 		{
 		public:
@@ -31,9 +35,11 @@ namespace Vizor
 			
 			virtual void did_finish_launching()
 			{
+				Console::warn("Preparing window...");
 				_window = std::make_unique<Window>(_application.context(), *this);
 				_window->show();
 				
+				Console::warn("Preparing surface...");
 				_surface_device = std::make_unique<SurfaceDevice>(_application.context(), *_window);
 				
 				Swapchain::QueueFamilyIndices queue_family_indices = {
@@ -44,10 +50,22 @@ namespace Vizor
 				auto size = _window->layout().bounds.size();
 				vk::Extent2D extent(size[0], size[1]);
 				
-				_swapchain = std::make_unique<Swapchain>(_surface_device->context(), queue_family_indices, extent);
+				try {
+					Console::warn("Preparing context...");
+					auto context = _surface_device->context();
+					Console::warn("Preparing swapchain...");
+					_swapchain = std::make_unique<Swapchain>(context, queue_family_indices, extent);
+				} catch (std::runtime_error & error) {
+					Console::error(error.what());
+				} catch (...) {
+					Console::error("Failed!");
+				}
 				
 				//_window->set_cursor(Display::Cursor::HIDDEN);
 				_window->set_title("Hello World");
+				
+				Console::warn("Instantiating swapchain...");
+				_swapchain->swapchain();
 			}
 		};
 		
