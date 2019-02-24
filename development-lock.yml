@@ -78,10 +78,10 @@ parallel:
   :commit: 70fd29c05588bc153a79af2cc0fa92606a1f973f
   :branch: master
 input:
-  :commit: 82a08439b86d5ebadedc924b884852a9cb8075fe
+  :commit: 2d6e4a0da9ef5e907a7c6271003f1d440712211f
   :branch: master
 display-cocoa:
-  :commit: c1e5c008ccbbadf3b8bc9b4d3344e181f1fb95eb
+  :commit: 9b7629c61a5b8b85dfbd822f722102c308ad4b78
   :branch: master
 display:
   :commit: 5cfca4fd578ba69a0220a6922f6139fe2615540c

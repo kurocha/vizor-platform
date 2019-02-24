@@ -16,6 +16,15 @@ namespace Vizor
 		{
 		}
 		
+		vk::SurfaceKHR SurfaceDevice::surface()
+		{
+			if (!_surface) {
+				GraphicsDevice::setup_device();
+			}
+			
+			return _surface;
+		}
+		
 		void SurfaceDevice::prepare(Layers & layers, Extensions & extensions) const noexcept
 		{
 			GraphicsDevice::prepare(layers, extensions);

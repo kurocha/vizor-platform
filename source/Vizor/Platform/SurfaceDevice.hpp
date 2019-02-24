@@ -26,8 +26,8 @@ namespace Vizor
 			
 			vk::SurfaceKHR surface();
 			
-			std::uint32_t graphics_queue_family_index() const noexcept {return _present_queue_family_index;}
-			vk::Queue present_queue();
+			std::uint32_t present_queue_family_index() const noexcept {return _present_queue_family_index;}
+			vk::Queue present_queue() const noexcept {return _present_queue;}
 			
 			SurfaceContext context() {return SurfaceContext(GraphicsDevice::context(), present_queue(), surface());}
 		
@@ -38,7 +38,6 @@ namespace Vizor
 			
 			virtual void setup_device(Layers & layers, Extensions & extensions) override;
 			
-		private:
 			Window & _window;
 			bool _enable_swapchain;
 			

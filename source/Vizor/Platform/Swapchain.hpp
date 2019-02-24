@@ -36,7 +36,7 @@ namespace Vizor
 			
 			vk::SurfaceFormatKHR surface_format() const noexcept {return _surface_format;}
 			
-			virtual void resize(vk::Extent2D extent);
+			// virtual void resize(vk::Extent2D extent);
 			
 		protected:
 			virtual vk::Extent2D select_extent(const vk::SurfaceCapabilitiesKHR & surface_capabilities);

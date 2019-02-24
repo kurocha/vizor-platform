@@ -12,10 +12,14 @@
 #include <vulkan/vulkan_macos.h>
 #endif
 
+#include <Logger/Console.hpp>
+
 namespace Vizor
 {
 	namespace Platform
 	{
+		using namespace Logger;
+		
 		Window::~Window()
 		{
 		}
