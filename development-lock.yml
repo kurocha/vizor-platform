@@ -81,7 +81,7 @@ input:
   :commit: 82a08439b86d5ebadedc924b884852a9cb8075fe
   :branch: master
 display-cocoa:
-  :commit: deb28e565e1a2d4a69097bdef0aee8ccb02cad55
+  :commit: c1e5c008ccbbadf3b8bc9b4d3344e181f1fb95eb
   :branch: master
 display:
   :commit: 5cfca4fd578ba69a0220a6922f6139fe2615540c
