@@ -13,6 +13,8 @@
 #endif
 
 #include <Logger/Console.hpp>
+#include <Streams/Container.hpp>
+#include <Streams/Safe.hpp>
 
 namespace Vizor
 {
@@ -37,8 +39,10 @@ namespace Vizor
 		
 		void Window::prepare(Layers & layers, Extensions & extensions) const noexcept
 		{
-#ifdef VK_USE_PLATFORM_MACOS_MVK
+#if defined(VK_USE_PLATFORM_MACOS_MVK)
 			extensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_XCB_KHR)
+			// extensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
 #else
 #error "Unsupported Platform!"
 #endif
@@ -46,11 +50,17 @@ namespace Vizor
 		
 		void Window::setup_surface()
 		{
-#ifdef VK_USE_PLATFORM_MACOS_MVK
+#if defined(VK_USE_PLATFORM_MACOS_MVK)
 			auto surface_create_info = vk::MacOSSurfaceCreateInfoMVK()
 				.setPView(_view);
 			
 			_surface = _instance.createMacOSSurfaceMVKUnique(surface_create_info, _allocation_callbacks);
+#elif defined(VK_USE_PLATFORM_XCB_KHR)
+			auto surface_create_info = vk::XcbSurfaceCreateInfoKHR()
+				.setConnection(this->connection())
+				.setWindow(this->handle());
+			
+			_surface = _instance.createXcbSurfaceKHRUnique(surface_create_info, _allocation_callbacks);
 #else
 #error "Unsupported Platform!"
 #endif

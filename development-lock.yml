@@ -3,7 +3,7 @@ generate-project:
   :commit: 6e1213ac380ddf82a7e96c0798d2beb55cf11db7
   :branch: master
 vizor:
-  :commit: d46b02f8a3eb5ea048152e2b79ab6e1209cbfec5
+  :commit: 4fc33557c36fe4e73130af7e96196f1efaf77865
   :branch: master
 generate-template:
   :commit: ad0dcfb6da64cc0508b71916b30e1050c82ecea7
@@ -78,11 +78,20 @@ parallel:
   :commit: 70fd29c05588bc153a79af2cc0fa92606a1f973f
   :branch: master
 input:
-  :commit: 2d6e4a0da9ef5e907a7c6271003f1d440712211f
+  :commit: b70f83b6c41177a2b2c57e14644bbcaf43b814d9
   :branch: master
 display-cocoa:
   :commit: 9b7629c61a5b8b85dfbd822f722102c308ad4b78
   :branch: master
 display:
-  :commit: 5cfca4fd578ba69a0220a6922f6139fe2615540c
+  :commit: 45297f357bb482a9af3471991fb38a2593791ab2
+  :branch: master
+display-xcb:
+  :commit: 8badd365d9b87a0b5c8efce2b84b04f3745bcc54
+  :branch: master
+platform-linux:
+  :commit: a1115ce55e978e3c638ebe7bd1a9e5cb5b7cfed4
+  :branch: master
+build-linux:
+  :commit: 9e114b14f8ea1719565f2f9e27a25b9c8089dfe9
   :branch: master

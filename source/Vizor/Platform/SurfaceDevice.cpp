@@ -9,6 +9,8 @@
 #include "SurfaceDevice.hpp"
 
 #include <Logger/Console.hpp>
+#include <Streams/Container.hpp>
+#include <Streams/Safe.hpp>
 
 namespace Vizor
 {
@@ -31,7 +33,6 @@ namespace Vizor
 		
 		void SurfaceDevice::prepare(Layers & layers, Extensions & extensions) const noexcept
 		{
-			Console::info("prepare(layers, extensions)");
 			GraphicsDevice::prepare(layers, extensions);
 			
 			if (_enable_swapchain) {
@@ -39,6 +40,7 @@ namespace Vizor
 			}
 			
 			_window.prepare(layers, extensions);
+			Console::info("prepare(", Streams::safe(layers), Streams::safe(extensions), ")");
 		}
 		
 		void SurfaceDevice::setup_queues()
