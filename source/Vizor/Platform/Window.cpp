@@ -39,13 +39,6 @@ namespace Vizor
 		
 		void Window::prepare(Layers & layers, Extensions & extensions) const noexcept
 		{
-#if defined(VK_USE_PLATFORM_MACOS_MVK)
-			extensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
-#elif defined(VK_USE_PLATFORM_XCB_KHR)
-			// extensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
-#else
-#error "Unsupported Platform!"
-#endif
 		}
 		
 		void Window::setup_surface()
