@@ -27,6 +27,20 @@ define_target 'vizor-platform-library' do |target|
 	end
 end
 
+define_target 'vizor-platform-test-shaders' do |target|
+	target.depends :platform
+	target.depends 'Convert/GLSLang'
+	
+	target.provides 'Assets/Vizor/Platform/Shaders' do
+		test_root = target.package.path + 'test'
+		cache_prefix = environment[:build_prefix] / environment.checksum + "shaders"
+		
+		convert source: test_root.glob('**/*.{frag,vert}'), root: cache_prefix
+		
+		append asset_search_paths cache_prefix
+	end
+end
+
 define_target 'vizor-platform-test' do |target|
 	target.depends 'Library/Vizor/Platform'
 	target.depends 'Library/UnitTest'
@@ -45,6 +59,8 @@ end
 define_configuration 'development' do |configuration|
 	configuration[:source] = "https://github.com/kurocha"
 	configuration.import "vizor-platform"
+	
+	configuration.require 'glslang'
 	
 	# Provides all the build related infrastructure:
 	configuration.require 'platforms'
