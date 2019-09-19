@@ -27,6 +27,9 @@ namespace Vizor
 			Swapchain(const SurfaceContext & surface_context, QueueFamilyIndices queue_family_indices, vk::Extent2D extent) : SurfaceContext(surface_context), _queue_family_indices(queue_family_indices), _extent(extent) {}
 			virtual ~Swapchain();
 			
+			const vk::Extent2D & extent() const noexcept {return _extent;}
+			const vk::SurfaceFormatKHR & surface_format() const noexcept {return _surface_format;}
+			
 			vk::SwapchainKHR swapchain();
 			
 			struct Buffer {
@@ -34,7 +37,7 @@ namespace Vizor
 				vk::UniqueImageView image_view;
 			};
 			
-			vk::SurfaceFormatKHR surface_format() const noexcept {return _surface_format;}
+			const std::vector<Buffer> & buffers() const noexcept {return _buffers;}
 			
 			// virtual void resize(vk::Extent2D extent);
 			
