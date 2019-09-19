@@ -51,8 +51,6 @@ namespace Vizor
 			for (const auto & present_mode : present_modes) {
 				if (present_mode == vk::PresentModeKHR::eMailbox) {
 					return present_mode;
-				} else if (present_mode == vk::PresentModeKHR::eImmediate) {
-					best_mode = present_mode;
 				}
 			}
 			
