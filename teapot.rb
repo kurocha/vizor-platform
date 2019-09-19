@@ -37,13 +37,16 @@ define_target 'vizor-platform-test-shaders' do |target|
 		
 		convert source: test_root.glob('**/*.{frag,vert}'), root: cache_prefix
 		
-		append asset_search_paths cache_prefix
+		shaders_fixtures cache_prefix
 	end
 end
 
 define_target 'vizor-platform-test' do |target|
 	target.depends 'Library/Vizor/Platform'
+	target.depends 'Assets/Vizor/Platform/Shaders'
+	
 	target.depends 'Library/UnitTest'
+	target.depends 'Library/Resources'
 	
 	target.depends 'Language/C++14'
 	
@@ -61,6 +64,7 @@ define_configuration 'development' do |configuration|
 	configuration.import "vizor-platform"
 	
 	configuration.require 'glslang'
+	configuration.require "resources"
 	
 	# Provides all the build related infrastructure:
 	configuration.require 'platforms'
