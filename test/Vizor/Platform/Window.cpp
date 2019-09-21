@@ -12,7 +12,7 @@
 #include <Vizor/Platform/Window.hpp>
 
 #include <Vizor/Platform/SurfaceDevice.hpp>
-#include <Vizor/Platform/Swapchain.hpp>
+#include <Vizor/Platform/SwapchainContext.hpp>
 
 #include <Logger/Console.hpp>
 
@@ -41,7 +41,7 @@ namespace Vizor
 			Vizor::Application _application;
 			std::unique_ptr<Window> _window;
 			std::unique_ptr<SurfaceDevice> _surface_device;
-			std::unique_ptr<Swapchain> _swapchain;
+			std::unique_ptr<SwapchainContext> _swapchain_context;
 			
 			Owned<Loader<Data>> _loader;
 			
@@ -69,7 +69,7 @@ namespace Vizor
 			
 			void create_render_pass() {
 				auto color_attachment = vk::AttachmentDescription()
-					.setFormat(_swapchain->surface_format().format)
+					.setFormat(_swapchain_context->surface_format().format)
 					.setSamples(vk::SampleCountFlagBits::e1)
 					.setLoadOp(vk::AttachmentLoadOp::eClear)
 					.setStoreOp(vk::AttachmentStoreOp::eStore)
@@ -106,21 +106,34 @@ namespace Vizor
 				_render_pass = _surface_device->device().createRenderPassUnique(info, _application.allocation_callbacks());
 			}
 			
+			vk::UniquePipelineCache _pipeline_cache;
+			
 			vk::UniquePipelineLayout _pipeline_layout;
 			vk::UniquePipeline _pipeline;
 			
+			vk::UniqueShaderModule _vertex_shader, _fragment_shader;
+			
 			void create_graphics_pipeline() {
-				auto vertex_shader = load_shader("Vizor/Platform/triangle.vert.spv");
-				auto fragment_shader = load_shader("Vizor/Platform/triangle.frag.spv");
+				if (!_pipeline_cache) {
+					auto pipeline_cache_create_info = vk::PipelineCacheCreateInfo();
+					
+					_pipeline_cache = _surface_device->device().createPipelineCacheUnique(pipeline_cache_create_info, _application.allocation_callbacks());
+				}
+				
+				if (!_vertex_shader)
+					_vertex_shader = load_shader("Vizor/Platform/triangle.vert.spv");
+				
+				if (!_fragment_shader)
+					_fragment_shader = load_shader("Vizor/Platform/triangle.frag.spv");
 				
 				auto vertex_shader_stage_create_info = vk::PipelineShaderStageCreateInfo()
 					.setStage(vk::ShaderStageFlagBits::eVertex)
-					.setModule(vertex_shader.get())
+					.setModule(_vertex_shader.get())
 					.setPName("main");
 				
 				auto fragment_shader_stage_create_info = vk::PipelineShaderStageCreateInfo()
 					.setStage(vk::ShaderStageFlagBits::eFragment)
-					.setModule(fragment_shader.get())
+					.setModule(_fragment_shader.get())
 					.setPName("main");
 				
 				vk::PipelineShaderStageCreateInfo shader_stages[] = {
@@ -136,7 +149,7 @@ namespace Vizor
 					.setTopology(vk::PrimitiveTopology::eTriangleList)
 					.setPrimitiveRestartEnable(false);
 				
-				auto extent = _swapchain->extent();
+				auto extent = _swapchain_context->extent();
 				auto viewport = vk::Viewport(0.0, 0.0, extent.width, extent.height, 0.0, 1.0);
 				
 				auto scissor = vk::Rect2D({0, 0}, extent);
@@ -190,15 +203,17 @@ namespace Vizor
 					.setLayout(_pipeline_layout.get())
 					.setRenderPass(_render_pass.get());
 
-				_pipeline = _surface_device->device().createGraphicsPipelineUnique(vk::PipelineCache(), graphics_pipeline_create_info, _application.allocation_callbacks());
+				_pipeline = _surface_device->device().createGraphicsPipelineUnique(_pipeline_cache.get(), graphics_pipeline_create_info, _application.allocation_callbacks());
 			}
 			
 			std::vector<vk::UniqueFramebuffer> _framebuffers;
 			
 			void create_framebuffers()
 			{
-				const auto & extent = _swapchain->extent();
-				const auto & buffers = _swapchain->buffers();
+				const auto & extent = _swapchain_context->extent();
+				const auto & buffers = _swapchain_context->buffers();
+				
+				_framebuffers.clear();
 				_framebuffers.reserve(buffers.size());
 				
 				for (std::size_t i = 0; i < buffers.size(); i++) {
@@ -235,7 +250,7 @@ namespace Vizor
 			
 			void create_command_buffers()
 			{
-				const auto & buffers = _swapchain->buffers();
+				const auto & buffers = _swapchain_context->buffers();
 				
 				auto allocate_info = vk::CommandBufferAllocateInfo()
 					.setCommandPool(_command_pool.get())
@@ -262,7 +277,7 @@ namespace Vizor
 						vk::RenderPassBeginInfo()
 							.setRenderPass(_render_pass.get())
 							.setFramebuffer(_framebuffers[i].get())
-							.setRenderArea(vk::Rect2D({0, 0}, _swapchain->extent()))
+							.setRenderArea(vk::Rect2D({0, 0}, _swapchain_context->extent()))
 							.setClearValueCount(1).setPClearValues(&clear_value),
 						vk::SubpassContents::eInline
 					);
@@ -277,7 +292,7 @@ namespace Vizor
 				}
 			}
 			
-			static const int MAX_FRAMES_IN_FLIGHT = 2;
+			static const int MAX_FRAMES_IN_FLIGHT = 4;
 			
 			std::vector<vk::UniqueSemaphore> _image_available;
 			std::vector<vk::UniqueSemaphore> _render_finished;
@@ -290,6 +305,10 @@ namespace Vizor
 				
 				auto fence_create_info = vk::FenceCreateInfo()
 					.setFlags(vk::FenceCreateFlagBits::eSignaled);
+				
+				_image_available.clear();
+				_render_finished.clear();
+				_fences.clear();
 				
 				for (std::size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 				{
@@ -307,8 +326,27 @@ namespace Vizor
 				}
 			}
 			
+			void recreate_swapchain()
+			{
+				auto size = _window->layout().bounds.size();
+				vk::Extent2D extent(size[0], size[1]);
+				
+				_current_frame = 0;
+				
+				_swapchain_context->resize(extent);
+				
+				create_render_pass();
+				create_graphics_pipeline();
+				create_framebuffers();
+				create_command_buffers();
+				prepare_command_buffers();
+				prepare_synchronisation();
+			}
+			
 			void draw_frame()
 			{
+				// Logger::Console::info("draw_frame:", _current_frame);
+				
 				auto device = _surface_device->device();
 				auto fence = _fences[_current_frame].get();
 				
@@ -316,16 +354,7 @@ namespace Vizor
 				
 				uint32_t image_index;
 				
-				{
-					auto result = device.acquireNextImageKHR(_swapchain->swapchain(), UINT64_MAX, _image_available[_current_frame].get(), nullptr, &image_index);
-				
-					// if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-					// 		// recreateSwapChain();
-					// 		return;
-					// } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-					// 		throw std::runtime_error("failed to acquire swap chain image!");
-					// }
-				}
+				device.acquireNextImageKHR(_swapchain_context->swapchain(), UINT64_MAX, _image_available[_current_frame].get(), nullptr, &image_index);
 				
 				auto submit_info = vk::SubmitInfo()
 					.setCommandBufferCount(1)
@@ -351,26 +380,15 @@ namespace Vizor
 					.setWaitSemaphoreCount(1)
 					.setPWaitSemaphores(signal_semaphores);
 				
-				vk::SwapchainKHR swapchains[] = {_swapchain->swapchain()};
+				vk::SwapchainKHR swapchains[] = {_swapchain_context->swapchain()};
 				present_info
 					.setSwapchainCount(1)
 					.setPSwapchains(swapchains)
 					.setPImageIndices(&image_index);
 				
-				{
-					auto result = _surface_device->present_queue().presentKHR(present_info);
-					
-					// if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
-					// 		framebufferResized = false;
-					// 		recreateSwapChain();
-					// } else if (result != VK_SUCCESS) {
-					// 		throw std::runtime_error("failed to present swap chain image!");
-					// }
-				}
+				_surface_device->present_queue().presentKHR(present_info);
 				
 				_current_frame = (_current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
-				
-				Logger::Console::info("draw_frame:", _current_frame);
 			}
 			
 			std::thread _renderer;
@@ -389,7 +407,7 @@ namespace Vizor
 				Console::warn("Preparing surface...");
 				_surface_device = std::make_unique<SurfaceDevice>(_application.context(), *_window);
 				
-				Swapchain::QueueFamilyIndices queue_family_indices = {
+				SwapchainContext::QueueFamilyIndices queue_family_indices = {
 					_surface_device->graphics_queue_family_index(),
 					_surface_device->present_queue_family_index(),
 				};
@@ -401,7 +419,7 @@ namespace Vizor
 					Console::warn("Preparing context...");
 					auto context = _surface_device->context();
 					Console::warn("Preparing swapchain...");
-					_swapchain = std::make_unique<Swapchain>(context, queue_family_indices, extent);
+					_swapchain_context = std::make_unique<SwapchainContext>(context, queue_family_indices, extent);
 				} catch (std::runtime_error & error) {
 					Console::error(error.what());
 				} catch (...) {
@@ -412,7 +430,7 @@ namespace Vizor
 				_window->set_title("Hello World");
 				
 				Console::warn("Instantiating swapchain...");
-				_swapchain->swapchain();
+				_swapchain_context->swapchain();
 				
 				create_render_pass();
 				create_graphics_pipeline();
@@ -421,11 +439,17 @@ namespace Vizor
 				create_command_buffers();
 				prepare_command_buffers();
 				prepare_synchronisation();
-				draw_frame();
 				
 				_renderer = std::thread([&]{
-					while (true)
-						draw_frame();
+					while (true) {
+						try {
+							draw_frame();
+						} catch (vk::OutOfDateKHRError) {
+							Console::warn("Recreate swapchain...");
+							_surface_device->device().waitIdle();
+							recreate_swapchain();
+						}
+					}
 				});
 			}
 		};

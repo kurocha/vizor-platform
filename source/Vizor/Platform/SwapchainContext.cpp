@@ -1,12 +1,12 @@
 //
-//  Swapchain.cpp
+//  SwapchainContext.cpp
 //  This file is part of the "Vizor" project and released under the MIT License.
 //
 //  Created by Samuel Williams on 20/11/2017.
 //  Copyright, 2017, by Samuel Williams. All rights reserved.
 //
 
-#include "Swapchain.hpp"
+#include "SwapchainContext.hpp"
 
 #include <Logger/Console.hpp>
 
@@ -16,20 +16,28 @@ namespace Vizor
 	{
 		using namespace Logger;
 		
-		Swapchain::~Swapchain()
+		SwapchainContext::~SwapchainContext()
 		{
 		}
 		
-		vk::SwapchainKHR Swapchain::swapchain()
+		vk::SwapchainKHR SwapchainContext::swapchain()
 		{
 			if (!_swapchain) {
+				setup_surface_format();
+				setup_present_mode();
 				setup_swapchain();
 			}
 			
 			return _swapchain.get();
 		}
 		
-		vk::SurfaceFormatKHR Swapchain::select_surface_format(const std::vector<vk::SurfaceFormatKHR> & surface_formats)
+		void SwapchainContext::resize(vk::Extent2D extent)
+		{
+			_extent = extent;
+			setup_swapchain();
+		}
+		
+		vk::SurfaceFormatKHR SwapchainContext::select_surface_format(const std::vector<vk::SurfaceFormatKHR> & surface_formats)
 		{
 			if (surface_formats.size() == 1 && surface_formats[0].format == vk::Format::eUndefined) {
 				return {vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear};
@@ -44,7 +52,7 @@ namespace Vizor
 			return surface_formats[0];
 		}
 		
-		vk::PresentModeKHR Swapchain::select_present_mode(const std::vector<vk::PresentModeKHR> & present_modes)
+		vk::PresentModeKHR SwapchainContext::select_present_mode(const std::vector<vk::PresentModeKHR> & present_modes)
 		{
 			vk::PresentModeKHR best_mode = vk::PresentModeKHR::eFifo;
 			
@@ -52,12 +60,15 @@ namespace Vizor
 				if (present_mode == vk::PresentModeKHR::eMailbox) {
 					return present_mode;
 				}
+				// else if (present_mode == vk::PresentModeKHR::eImmediate) {
+				// 	best_mode = present_mode;
+				// }
 			}
 			
 			return best_mode;
 		}
 		
-		vk::Extent2D Swapchain::select_extent(const vk::SurfaceCapabilitiesKHR & surface_capabilities)
+		vk::Extent2D SwapchainContext::select_extent(const vk::SurfaceCapabilitiesKHR & surface_capabilities)
 		{
 			if (surface_capabilities.currentExtent.width != std::numeric_limits<std::uint32_t>::max()) {
 				return surface_capabilities.currentExtent;
@@ -66,35 +77,34 @@ namespace Vizor
 			}
 		}
 		
-		void Swapchain::setup_surface_format()
+		void SwapchainContext::setup_surface_format()
 		{
-			Console::info("setup_surface_format()",
-				"Physical Device:", _physical_device,
-				"Surface:", _surface
-			);
-			
 			_surface_format = select_surface_format(
 				_physical_device.getSurfaceFormatsKHR(_surface)
 			);
+			
+			Console::info("setup_surface_format()",
+				"Physical Device:", _physical_device,
+				"Surface:", _surface,
+				"->", vk::to_string(_surface_format.format), vk::to_string(_surface_format.colorSpace)
+			);
 		}
 		
-		void Swapchain::setup_present_mode()
+		void SwapchainContext::setup_present_mode()
 		{
-			Console::info("setup_present_mode()",
-				"Physical Device:", _physical_device,
-				"Surface:", _surface
-			);
-			
 			_present_mode = select_present_mode(
 				_physical_device.getSurfacePresentModesKHR(_surface)
 			);
+			
+			Console::info("setup_present_mode()",
+				"Physical Device:", _physical_device,
+				"Surface:", _surface,
+				"->", vk::to_string(_present_mode)
+			);
 		}
 		
-		void Swapchain::setup_swapchain()
+		void SwapchainContext::setup_swapchain()
 		{
-			setup_surface_format();
-			setup_present_mode();
-			
 			auto capabilities = _physical_device.getSurfaceCapabilitiesKHR(_surface);
 			
 			auto extent = select_extent(capabilities);
@@ -115,6 +125,10 @@ namespace Vizor
 				.setImageExtent(extent)
 				.setImageArrayLayers(1)
 				.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
+			
+			if (_swapchain) {
+				swapchain_create_info.setOldSwapchain(_swapchain.release());
+			}
 			
 			uint32_t queue_family_indices[] = {
 				_queue_family_indices.graphics_queue_family_index,
@@ -147,12 +161,12 @@ namespace Vizor
 			_extent = extent;
 		}
 		
-		void Swapchain::setup_swapchain(vk::SwapchainCreateInfoKHR & swapchain_create_info)
+		void SwapchainContext::setup_swapchain(vk::SwapchainCreateInfoKHR & swapchain_create_info)
 		{
 			_swapchain = _device.createSwapchainKHRUnique(swapchain_create_info, _allocation_callbacks);
 		}
 		
-		void Swapchain::setup_image_buffers(const std::vector<vk::Image> & images)
+		void SwapchainContext::setup_image_buffers(const std::vector<vk::Image> & images)
 		{
 			using S = vk::ComponentSwizzle;
 			
