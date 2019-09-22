@@ -9,6 +9,7 @@
 #include <UnitTest/UnitTest.hpp>
 
 #include <Vizor/Application.hpp>
+#include <Vizor/ForwardRenderer.hpp>
 #include <Vizor/Platform/Window.hpp>
 
 #include <Vizor/Platform/SurfaceDevice.hpp>
@@ -22,6 +23,12 @@
 
 #include <URI/File.hpp>
 
+#include <Numerics/Vector.hpp>
+#include <Numerics/Matrix.hpp>
+#include <Numerics/Transforms.hpp>
+#include <Numerics/Radians.hpp>
+#include <Geometry/Box.hpp>
+
 #include <thread>
 
 namespace Vizor
@@ -31,6 +38,13 @@ namespace Vizor
 		using namespace Logger;
 		using namespace Resources;
 		using namespace Memory;
+		using namespace Numerics;
+		
+		struct Camera {
+			Numerics::Mat44 projection = Numerics::IDENTITY;
+			Numerics::Mat44 model = Numerics::IDENTITY;
+			Numerics::Mat44 view = Numerics::IDENTITY;
+		};
 		
 		class ShowWindowApplication : public Native::Application
 		{
@@ -65,66 +79,90 @@ namespace Vizor
 				return create_shader(*data);
 			}
 			
-			vk::UniqueRenderPass _render_pass;
+			std::unique_ptr<ForwardRenderer> _forward_renderer;
 			
 			void create_render_pass() {
-				auto color_attachment = vk::AttachmentDescription()
-					.setFormat(_swapchain_context->surface_format().format)
-					.setSamples(vk::SampleCountFlagBits::e1)
-					.setLoadOp(vk::AttachmentLoadOp::eClear)
-					.setStoreOp(vk::AttachmentStoreOp::eStore)
-					.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
-					.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
-					.setInitialLayout(vk::ImageLayout::eUndefined)
-					.setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
-				
-				auto attachment_reference = vk::AttachmentReference()
-					.setAttachment(0)
-					.setLayout(vk::ImageLayout::eColorAttachmentOptimal);
-				
-				auto subpass = vk::SubpassDescription()
-					.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
-					.setColorAttachmentCount(1)
-					.setPColorAttachments(&attachment_reference);
-				
-				auto dependency = vk::SubpassDependency()
-					.setSrcSubpass(VK_SUBPASS_EXTERNAL)
-					.setDstSubpass(0)
-					.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
-					.setSrcAccessMask(vk::AccessFlagBits(0))
-					.setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
-					.setDstAccessMask(vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
+				_forward_renderer = std::make_unique<ForwardRenderer>(_surface_device->context(), _swapchain_context->surface_format().format);
+			}
+			
+			Camera _camera;
+			DeviceBuffer _uniform_buffer;
+			
+			void setup_uniform_buffer()
+			{
+				_uniform_buffer = _surface_device->context().make_host_buffer_with(_camera, vk::BufferUsageFlagBits::eUniformBuffer);
 
-				auto info = vk::RenderPassCreateInfo()
-					.setAttachmentCount(1)
-					.setPAttachments(&color_attachment)
-					.setSubpassCount(1)
-					.setPSubpasses(&subpass)
-					.setDependencyCount(1)
-					.setPDependencies(&dependency);
-				
-				_render_pass = _surface_device->device().createRenderPassUnique(info, _application.allocation_callbacks());
+				// Store information in the uniform's descriptor
+				_uniform_buffer.descriptor = vk::DescriptorBufferInfo(*_uniform_buffer.buffer, 0, sizeof(_camera));
+			}
+
+			void update_uniform_buffer()
+			{
+				_surface_device->context().write_memory(*_uniform_buffer.memory, (Byte *)&_camera, sizeof(_camera));
 			}
 			
 			vk::UniquePipelineCache _pipeline_cache;
 			
+			vk::UniqueDescriptorPool _descriptor_pool;
+			vk::UniqueDescriptorSetLayout _descriptor_set_layout;
 			vk::UniquePipelineLayout _pipeline_layout;
 			vk::UniquePipeline _pipeline;
 			
 			vk::UniqueShaderModule _vertex_shader, _fragment_shader;
+			vk::DescriptorSet _descriptor_set;
+			
+			inline vk::WriteDescriptorSet descriptor_set_bind(const vk::DescriptorSet & desc_set, vk::DescriptorImageInfo const &image_info, vk::DescriptorType type, int dest_binding) {
+				return vk::WriteDescriptorSet()
+					.setDstSet(desc_set)
+					.setPImageInfo(&image_info)
+					.setDstBinding(dest_binding)
+					.setDescriptorCount(1)
+					.setDescriptorType(type);
+			}
+			
+			inline vk::WriteDescriptorSet descriptor_set_bind(const vk::DescriptorSet & desc_set, vk::DescriptorBufferInfo const &buffer_info, vk::DescriptorType type, int dest_binding) {
+				return vk::WriteDescriptorSet()
+					.setDstSet(desc_set)
+					.setPBufferInfo(&buffer_info)
+					.setDstBinding(dest_binding)
+					.setDescriptorCount(1)
+					.setDescriptorType(type);
+			}
 			
 			void create_graphics_pipeline() {
+				auto context = _surface_device->context();
+				
 				if (!_pipeline_cache) {
 					auto pipeline_cache_create_info = vk::PipelineCacheCreateInfo();
 					
 					_pipeline_cache = _surface_device->device().createPipelineCacheUnique(pipeline_cache_create_info, _application.allocation_callbacks());
 				}
 				
-				if (!_vertex_shader)
+				if (!_vertex_shader) {
 					_vertex_shader = load_shader("Vizor/Platform/triangle.vert.spv");
+				}
 				
-				if (!_fragment_shader)
+				if (!_fragment_shader) {
 					_fragment_shader = load_shader("Vizor/Platform/triangle.frag.spv");
+				}
+				
+				if (!_descriptor_pool) {
+					_descriptor_pool = context.create_descriptor_pool({
+						vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, 1),
+					}, 1);
+				}
+				
+				_descriptor_set_layout = context.create_descriptor_layout({
+					vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, nullptr),
+				});
+				
+				_descriptor_set = context.allocate_descriptor_sets(*_descriptor_pool, {*_descriptor_set_layout}).at(0);
+				
+				auto buffer_info = vk::DescriptorBufferInfo(*_uniform_buffer.buffer, 0, _uniform_buffer.info.size);
+				
+				context.device().updateDescriptorSets({
+					descriptor_set_bind(_descriptor_set, buffer_info, vk::DescriptorType::eUniformBuffer, 0),
+				}, {});
 				
 				auto vertex_shader_stage_create_info = vk::PipelineShaderStageCreateInfo()
 					.setStage(vk::ShaderStageFlagBits::eVertex)
@@ -168,6 +206,11 @@ namespace Vizor
 					.setCullMode(vk::CullModeFlagBits::eNone)
 					.setFrontFace(vk::FrontFace::eClockwise)
 				;
+				
+				auto depth_stencil_state_create_info = vk::PipelineDepthStencilStateCreateInfo()
+					.setDepthTestEnable(true)
+					.setDepthWriteEnable(true)
+					.setDepthCompareOp(vk::CompareOp::eLessOrEqual);
 
 				auto multisample_state_create_info = vk::PipelineMultisampleStateCreateInfo()
 					.setRasterizationSamples(vk::SampleCountFlagBits::e1)
@@ -188,7 +231,13 @@ namespace Vizor
 					.setBlendConstants({{1.0, 1.0, 1.0, 1.0}})
 					.setAttachmentCount(1).setPAttachments(&color_blend_attachment_state);
 				
-				auto layout_create_info = vk::PipelineLayoutCreateInfo();
+				std::array set_layouts = {
+					_descriptor_set_layout.get()
+				};
+				
+				auto layout_create_info = vk::PipelineLayoutCreateInfo()
+					.setSetLayoutCount(set_layouts.size())
+					.setPSetLayouts(set_layouts.data());
 				
 				_pipeline_layout = _surface_device->device().createPipelineLayoutUnique(layout_create_info, _application.allocation_callbacks());
 				
@@ -200,30 +249,35 @@ namespace Vizor
 					.setPMultisampleState(&multisample_state_create_info)
 					.setPColorBlendState(&color_blend_state_create_info)
 					.setPRasterizationState(&rasterization_state_create_info)
+					.setPDepthStencilState(&depth_stencil_state_create_info)
 					.setLayout(_pipeline_layout.get())
-					.setRenderPass(_render_pass.get());
+					.setRenderPass(_forward_renderer->render_pass());
 
 				_pipeline = _surface_device->device().createGraphicsPipelineUnique(_pipeline_cache.get(), graphics_pipeline_create_info, _application.allocation_callbacks());
 			}
 			
 			std::vector<vk::UniqueFramebuffer> _framebuffers;
+			DeviceImageView _depth_buffer;
 			
 			void create_framebuffers()
 			{
 				const auto & extent = _swapchain_context->extent();
 				const auto & buffers = _swapchain_context->buffers();
 				
+				_depth_buffer = _forward_renderer->make_depth_buffer({extent.width, extent.height, 1});
+				
 				_framebuffers.clear();
 				_framebuffers.reserve(buffers.size());
 				
 				for (std::size_t i = 0; i < buffers.size(); i++) {
-						vk::ImageView attachments[] = {
-								buffers[i].image_view.get()
+						std::array attachments = {
+							buffers[i].image_view.get(),
+							_depth_buffer.view.get(),
 						};
 						
 						auto framebuffer_create_info = vk::FramebufferCreateInfo()
-							.setRenderPass(_render_pass.get())
-							.setAttachmentCount(1).setPAttachments(attachments)
+							.setRenderPass(_forward_renderer->render_pass())
+							.setAttachmentCount(attachments.size()).setPAttachments(attachments.data())
 							.setWidth(extent.width)
 							.setHeight(extent.height)
 							.setLayers(1)
@@ -263,9 +317,10 @@ namespace Vizor
 			
 			void prepare_command_buffers()
 			{
-				auto clear_value = vk::ClearValue()
-					.setColor(std::array<float, 4>{0.0, 0.0, 0.2, 1.0})
-				;
+				std::array clear_values = {
+					vk::ClearValue().setColor(std::array{0.0f, 0.0f, 0.0f, 0.0f}),
+					vk::ClearValue().setDepthStencil({1.0f, 0}),
+				};
 				
 				for (size_t i = 0; i < _command_buffers.size(); i++)
 				{
@@ -275,12 +330,14 @@ namespace Vizor
 					
 					commands->beginRenderPass(
 						vk::RenderPassBeginInfo()
-							.setRenderPass(_render_pass.get())
+							.setRenderPass(_forward_renderer->render_pass())
 							.setFramebuffer(_framebuffers[i].get())
 							.setRenderArea(vk::Rect2D({0, 0}, _swapchain_context->extent()))
-							.setClearValueCount(1).setPClearValues(&clear_value),
+							.setClearValueCount(clear_values.size()).setPClearValues(clear_values.data()),
 						vk::SubpassContents::eInline
 					);
+					
+					commands->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *_pipeline_layout, 0, {_descriptor_set}, nullptr);
 					
 					commands->bindPipeline(vk::PipelineBindPoint::eGraphics, _pipeline.get());
 					
@@ -292,11 +349,11 @@ namespace Vizor
 				}
 			}
 			
-			static const int MAX_FRAMES_IN_FLIGHT = 4;
+			static const int MAX_FRAMES_IN_FLIGHT = 2;
 			
 			std::vector<vk::UniqueSemaphore> _image_available;
 			std::vector<vk::UniqueSemaphore> _render_finished;
-			std::vector<vk::UniqueFence> _fences;
+			std::vector<vk::UniqueFence> _fences; 
 			size_t _current_frame = 0;
 			
 			void prepare_synchronisation()
@@ -432,7 +489,10 @@ namespace Vizor
 				Console::warn("Instantiating swapchain...");
 				_swapchain_context->swapchain();
 				
+				_camera.model = Numerics::Transforms::rotate(45_deg, Vec3{0, 0, 1});
+				
 				create_render_pass();
+				setup_uniform_buffer();
 				create_graphics_pipeline();
 				create_framebuffers();
 				create_command_pool();

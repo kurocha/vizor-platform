@@ -9,7 +9,7 @@ end
 # Build Targets
 
 define_target 'vizor-platform-library' do |target|
-	target.depends 'Language/C++14'
+	target.depends 'Language/C++17'
 	
 	target.depends 'Library/Vizor', public: true
 	target.depends :display_native, public: true
@@ -48,7 +48,7 @@ define_target 'vizor-platform-test' do |target|
 	target.depends 'Library/UnitTest'
 	target.depends 'Library/Resources'
 	
-	target.depends 'Language/C++14'
+	target.depends 'Language/C++17'
 	
 	target.provides 'Test/Vizor/Platform' do |arguments|
 		test_root = target.package.path + 'test'
