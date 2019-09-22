@@ -448,6 +448,7 @@ namespace Vizor
 				_current_frame = (_current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
 			}
 			
+			Time::Timer _timer;
 			std::thread _renderer;
 			
 			virtual void did_finish_launching()
@@ -489,8 +490,6 @@ namespace Vizor
 				Console::warn("Instantiating swapchain...");
 				_swapchain_context->swapchain();
 				
-				_camera.model = Numerics::Transforms::rotate(45_deg, Vec3{0, 0, 1});
-				
 				create_render_pass();
 				setup_uniform_buffer();
 				create_graphics_pipeline();
@@ -503,6 +502,9 @@ namespace Vizor
 				_renderer = std::thread([&]{
 					while (true) {
 						try {
+							_camera.model = Numerics::Transforms::rotate(Numerics::radians((double)_timer.time()), Vec3{0, 0, 1});
+							update_uniform_buffer();
+							
 							draw_frame();
 						} catch (vk::OutOfDateKHRError) {
 							Console::warn("Recreate swapchain...");
