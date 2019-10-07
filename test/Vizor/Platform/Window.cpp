@@ -389,7 +389,6 @@ namespace Vizor
 				vk::Extent2D extent(size[0], size[1]);
 				
 				_current_frame = 0;
-				
 				_swapchain_context->resize(extent);
 				
 				create_render_pass();
