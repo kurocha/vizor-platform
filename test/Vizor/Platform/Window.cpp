@@ -152,13 +152,13 @@ namespace Vizor
 					_descriptor_pool = context.create_descriptor_pool({
 						vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, 1),
 					}, 1);
+					
+					_descriptor_set_layout = context.create_descriptor_layout({
+						vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, nullptr),
+					});
+					
+					_descriptor_set = context.allocate_descriptor_sets(*_descriptor_pool, {*_descriptor_set_layout}).at(0);
 				}
-				
-				_descriptor_set_layout = context.create_descriptor_layout({
-					vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, nullptr),
-				});
-				
-				_descriptor_set = context.allocate_descriptor_sets(*_descriptor_pool, {*_descriptor_set_layout}).at(0);
 				
 				auto buffer_info = vk::DescriptorBufferInfo(*_uniform_buffer.buffer, 0, _uniform_buffer.info.size);
 				
@@ -396,8 +396,10 @@ namespace Vizor
 				_swapchain_controller->resize(extent);
 				
 				create_render_pass();
+				setup_uniform_buffer();
 				create_graphics_pipeline();
 				create_framebuffers();
+				// create_command_pool();
 				create_command_buffers();
 				prepare_command_buffers();
 				prepare_synchronisation();
@@ -505,7 +507,7 @@ namespace Vizor
 				_renderer = std::thread([&]{
 					while (true) {
 						try {
-							_camera.model = Numerics::Transforms::rotate(Numerics::radians((double)_timer.time()), Vec3{0, 0, 1});
+							//_camera.model = Numerics::Transforms::rotate(Numerics::radians((double)_timer.time()), Vec3{0, 0, 1});
 							update_uniform_buffer();
 							
 							draw_frame();
