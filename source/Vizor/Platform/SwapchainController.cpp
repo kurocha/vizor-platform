@@ -1,12 +1,12 @@
 //
-//  SwapchainContext.cpp
+//  SwapchainController.cpp
 //  This file is part of the "Vizor" project and released under the MIT License.
 //
 //  Created by Samuel Williams on 20/11/2017.
 //  Copyright, 2017, by Samuel Williams. All rights reserved.
 //
 
-#include "SwapchainContext.hpp"
+#include "SwapchainController.hpp"
 
 #include <Logger/Console.hpp>
 
@@ -16,11 +16,11 @@ namespace Vizor
 	{
 		using namespace Logger;
 		
-		SwapchainContext::~SwapchainContext()
+		SwapchainController::~SwapchainController()
 		{
 		}
 		
-		vk::SwapchainKHR SwapchainContext::swapchain()
+		vk::SwapchainKHR SwapchainController::swapchain()
 		{
 			if (!_swapchain) {
 				setup_surface_format();
@@ -31,13 +31,13 @@ namespace Vizor
 			return _swapchain.get();
 		}
 		
-		void SwapchainContext::resize(vk::Extent2D extent)
+		void SwapchainController::resize(vk::Extent2D extent)
 		{
 			_extent = extent;
 			setup_swapchain();
 		}
 		
-		vk::SurfaceFormatKHR SwapchainContext::select_surface_format(const std::vector<vk::SurfaceFormatKHR> & surface_formats)
+		vk::SurfaceFormatKHR SwapchainController::select_surface_format(const std::vector<vk::SurfaceFormatKHR> & surface_formats)
 		{
 			if (surface_formats.size() == 1 && surface_formats[0].format == vk::Format::eUndefined) {
 				return {vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear};
@@ -52,7 +52,7 @@ namespace Vizor
 			return surface_formats[0];
 		}
 		
-		vk::PresentModeKHR SwapchainContext::select_present_mode(const std::vector<vk::PresentModeKHR> & present_modes)
+		vk::PresentModeKHR SwapchainController::select_present_mode(const std::vector<vk::PresentModeKHR> & present_modes)
 		{
 			vk::PresentModeKHR best_mode = vk::PresentModeKHR::eFifo;
 			
@@ -68,7 +68,7 @@ namespace Vizor
 			return best_mode;
 		}
 		
-		vk::Extent2D SwapchainContext::select_extent(const vk::SurfaceCapabilitiesKHR & surface_capabilities)
+		vk::Extent2D SwapchainController::select_extent(const vk::SurfaceCapabilitiesKHR & surface_capabilities)
 		{
 			if (surface_capabilities.currentExtent.width != std::numeric_limits<std::uint32_t>::max()) {
 				return surface_capabilities.currentExtent;
@@ -77,7 +77,7 @@ namespace Vizor
 			}
 		}
 		
-		void SwapchainContext::setup_surface_format()
+		void SwapchainController::setup_surface_format()
 		{
 			_surface_format = select_surface_format(
 				_physical_device.getSurfaceFormatsKHR(_surface)
@@ -90,7 +90,7 @@ namespace Vizor
 			);
 		}
 		
-		void SwapchainContext::setup_present_mode()
+		void SwapchainController::setup_present_mode()
 		{
 			_present_mode = select_present_mode(
 				_physical_device.getSurfacePresentModesKHR(_surface)
@@ -103,7 +103,7 @@ namespace Vizor
 			);
 		}
 		
-		void SwapchainContext::setup_swapchain()
+		void SwapchainController::setup_swapchain()
 		{
 			auto capabilities = _physical_device.getSurfaceCapabilitiesKHR(_surface);
 			
@@ -161,12 +161,12 @@ namespace Vizor
 			_extent = extent;
 		}
 		
-		void SwapchainContext::setup_swapchain(vk::SwapchainCreateInfoKHR & swapchain_create_info)
+		void SwapchainController::setup_swapchain(vk::SwapchainCreateInfoKHR & swapchain_create_info)
 		{
 			_swapchain = _device.createSwapchainKHRUnique(swapchain_create_info, _allocation_callbacks);
 		}
 		
-		void SwapchainContext::setup_image_buffers(const std::vector<vk::Image> & images)
+		void SwapchainController::setup_image_buffers(const std::vector<vk::Image> & images)
 		{
 			using S = vk::ComponentSwizzle;
 			

@@ -13,9 +13,11 @@
 #include <Vizor/Platform/Window.hpp>
 
 #include <Vizor/Platform/SurfaceDevice.hpp>
-#include <Vizor/Platform/SwapchainContext.hpp>
+#include <Vizor/Platform/SwapchainController.hpp>
 
 #include <Logger/Console.hpp>
+#include <Streams/Safe.hpp>
+#include <Streams/Container.hpp>
 
 #include <Resources/FileLoader.hpp>
 #include <Resources/RelativeLoader.hpp>
@@ -55,7 +57,7 @@ namespace Vizor
 			Vizor::Application _application;
 			std::unique_ptr<Window> _window;
 			std::unique_ptr<SurfaceDevice> _surface_device;
-			std::unique_ptr<SwapchainContext> _swapchain_context;
+			std::unique_ptr<SwapchainController> _swapchain_controller;
 			
 			Owned<Loader<Data>> _loader;
 			
@@ -82,7 +84,7 @@ namespace Vizor
 			std::unique_ptr<ForwardRenderer> _forward_renderer;
 			
 			void create_render_pass() {
-				_forward_renderer = std::make_unique<ForwardRenderer>(_surface_device->context(), _swapchain_context->surface_format().format);
+				_forward_renderer = std::make_unique<ForwardRenderer>(_surface_device->context(), _swapchain_controller->surface_format().format);
 			}
 			
 			Camera _camera;
@@ -184,10 +186,10 @@ namespace Vizor
 					.setVertexAttributeDescriptionCount(0);
 				
 				auto input_assembly_create_info = vk::PipelineInputAssemblyStateCreateInfo()
-					.setTopology(vk::PrimitiveTopology::eTriangleList)
+					.setTopology(vk::PrimitiveTopology::eTriangleStrip)
 					.setPrimitiveRestartEnable(false);
 				
-				auto extent = _swapchain_context->extent();
+				auto extent = _swapchain_controller->extent();
 				auto viewport = vk::Viewport(0.0, 0.0, extent.width, extent.height, 0.0, 1.0);
 				
 				auto scissor = vk::Rect2D({0, 0}, extent);
@@ -261,8 +263,8 @@ namespace Vizor
 			
 			void create_framebuffers()
 			{
-				const auto & extent = _swapchain_context->extent();
-				const auto & buffers = _swapchain_context->buffers();
+				const auto & extent = _swapchain_controller->extent();
+				const auto & buffers = _swapchain_controller->buffers();
 				
 				_depth_buffer = _forward_renderer->make_depth_buffer({extent.width, extent.height, 1});
 				
@@ -304,7 +306,7 @@ namespace Vizor
 			
 			void create_command_buffers()
 			{
-				const auto & buffers = _swapchain_context->buffers();
+				const auto & buffers = _swapchain_controller->buffers();
 				
 				auto allocate_info = vk::CommandBufferAllocateInfo()
 					.setCommandPool(_command_pool.get())
@@ -332,7 +334,7 @@ namespace Vizor
 						vk::RenderPassBeginInfo()
 							.setRenderPass(_forward_renderer->render_pass())
 							.setFramebuffer(_framebuffers[i].get())
-							.setRenderArea(vk::Rect2D({0, 0}, _swapchain_context->extent()))
+							.setRenderArea(vk::Rect2D({0, 0}, _swapchain_controller->extent()))
 							.setClearValueCount(clear_values.size()).setPClearValues(clear_values.data()),
 						vk::SubpassContents::eInline
 					);
@@ -341,7 +343,7 @@ namespace Vizor
 					
 					commands->bindPipeline(vk::PipelineBindPoint::eGraphics, _pipeline.get());
 					
-					commands->draw(3, 1, 0, 0);
+					commands->draw(4, 1, 0, 0);
 					
 					commands->endRenderPass();
 					
@@ -388,8 +390,10 @@ namespace Vizor
 				auto size = _window->layout().bounds.size();
 				vk::Extent2D extent(size[0], size[1]);
 				
+				Console::warn("Resizing swapchain...", Streams::safe(size));
+				
 				_current_frame = 0;
-				_swapchain_context->resize(extent);
+				_swapchain_controller->resize(extent);
 				
 				create_render_pass();
 				create_graphics_pipeline();
@@ -410,7 +414,7 @@ namespace Vizor
 				
 				uint32_t image_index;
 				
-				device.acquireNextImageKHR(_swapchain_context->swapchain(), UINT64_MAX, _image_available[_current_frame].get(), nullptr, &image_index);
+				device.acquireNextImageKHR(_swapchain_controller->swapchain(), UINT64_MAX, _image_available[_current_frame].get(), nullptr, &image_index);
 				
 				auto submit_info = vk::SubmitInfo()
 					.setCommandBufferCount(1)
@@ -436,7 +440,7 @@ namespace Vizor
 					.setWaitSemaphoreCount(1)
 					.setPWaitSemaphores(signal_semaphores);
 				
-				vk::SwapchainKHR swapchains[] = {_swapchain_context->swapchain()};
+				vk::SwapchainKHR swapchains[] = {_swapchain_controller->swapchain()};
 				present_info
 					.setSwapchainCount(1)
 					.setPSwapchains(swapchains)
@@ -464,7 +468,7 @@ namespace Vizor
 				Console::warn("Preparing surface...");
 				_surface_device = std::make_unique<SurfaceDevice>(_application.context(), *_window);
 				
-				SwapchainContext::QueueFamilyIndices queue_family_indices = {
+				SwapchainController::QueueFamilyIndices queue_family_indices = {
 					_surface_device->graphics_queue_family_index(),
 					_surface_device->present_queue_family_index(),
 				};
@@ -476,7 +480,7 @@ namespace Vizor
 					Console::warn("Preparing context...");
 					auto context = _surface_device->context();
 					Console::warn("Preparing swapchain...");
-					_swapchain_context = std::make_unique<SwapchainContext>(context, queue_family_indices, extent);
+					_swapchain_controller = std::make_unique<SwapchainController>(context, queue_family_indices, extent);
 				} catch (std::runtime_error & error) {
 					Console::error(error.what());
 				} catch (...) {
@@ -487,7 +491,7 @@ namespace Vizor
 				_window->set_title("Hello World");
 				
 				Console::warn("Instantiating swapchain...");
-				_swapchain_context->swapchain();
+				_swapchain_controller->swapchain();
 				
 				create_render_pass();
 				setup_uniform_buffer();

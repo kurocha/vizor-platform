@@ -1,5 +1,5 @@
 //
-//  SwapchainContext.hpp
+//  SwapchainController.hpp
 //  This file is part of the "Vizor" project and released under the MIT License.
 //
 //  Created by Samuel Williams on 20/11/2017.
@@ -15,7 +15,7 @@ namespace Vizor
 {
 	namespace Platform
 	{
-		class SwapchainContext : public SurfaceContext
+		class SwapchainController : public SurfaceContext
 		{
 		public:
 			struct QueueFamilyIndices
@@ -24,8 +24,8 @@ namespace Vizor
 				std::uint32_t present_queue_family_index;
 			};
 			
-			SwapchainContext(const SurfaceContext & surface_context, QueueFamilyIndices queue_family_indices, vk::Extent2D extent) : SurfaceContext(surface_context), _queue_family_indices(queue_family_indices), _extent(extent) {}
-			virtual ~SwapchainContext();
+			SwapchainController(const SurfaceContext & surface_context, QueueFamilyIndices queue_family_indices, vk::Extent2D extent) : SurfaceContext(surface_context), _queue_family_indices(queue_family_indices), _extent(extent) {}
+			virtual ~SwapchainController();
 			
 			const vk::Extent2D & extent() const noexcept {return _extent;}
 			const vk::SurfaceFormatKHR & surface_format() const noexcept {return _surface_format;}
