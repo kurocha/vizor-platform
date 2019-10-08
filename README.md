@@ -1,4 +1,5 @@
 # Vizor Platform
+
 ## Usage
 
 Vizor Platform is a fantastic project with lots of potential.
@@ -28,6 +29,7 @@ Fetch all the necessary project dependencies:
 Run the tests to confirm basic functionality:
 
 	$ cd vizor-platform
+
 You can run the tool by executing the following:
 
 	$ teapot Test/VizorPlatform
