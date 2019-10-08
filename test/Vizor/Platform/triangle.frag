@@ -71,6 +71,12 @@ int iterate(vec2 c)
 
 void main()
 {
-	float s = float(iterate(mapping)) / float(max_iterations);
-	color = vec4(hsv2rgb(vec3(s, s, s)).rgb, 1.0);
+	int iterations = iterate(mapping);
+	
+	if (iterations == max_iterations) {
+		color = vec4(0.0);
+	} else {
+		float s = float(iterations) / float(max_iterations);
+		color = vec4(hsv2rgb(vec3(s/4.0, 0.9, s)), 1.0);
+	}
 }

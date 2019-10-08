@@ -11,10 +11,10 @@ layout(binding = 0) uniform UBO {
 } camera;
 
 vec2 positions[4] = vec2[](
-	vec2(-0.5, -0.5),
-	vec2(0.5, -0.5),
-	vec2(-0.5, 0.5),
-	vec2(0.5, 0.5)
+	vec2(-1.0, -1.0),
+	vec2(1.0, -1.0),
+	vec2(-1.0, 1.0),
+	vec2(1.0, 1.0)
 );
 
 vec3 colors[4] = vec3[](
@@ -31,5 +31,6 @@ void main() {
 	gl_Position = camera.projection * position;
 	
 	albedo = colors[gl_VertexIndex];
-	mapping = positions[gl_VertexIndex] * 3.0;
+	mapping = (positions[gl_VertexIndex] + vec2(-0.4, 0.0)) * 1.5;
+	//mapping = (positions[gl_VertexIndex] + vec2(-0.25, 0.0));
 }
