@@ -31,6 +31,6 @@ void main() {
 	gl_Position = camera.projection * position;
 	
 	albedo = colors[gl_VertexIndex];
-	mapping = (positions[gl_VertexIndex] + vec2(-0.4, 0.0)) * 1.5;
-	//mapping = (positions[gl_VertexIndex] + vec2(-0.25, 0.0));
+	//mapping = (positions[gl_VertexIndex] + vec2(-0.4, 0.0)) * 1.5;
+	mapping = (positions[gl_VertexIndex] + vec2(-0.5, 0.0)) / 2;
 }

@@ -216,7 +216,8 @@ namespace Vizor
 
 				auto multisample_state_create_info = vk::PipelineMultisampleStateCreateInfo()
 					.setRasterizationSamples(vk::SampleCountFlagBits::e1)
-					.setSampleShadingEnable(false);
+					.setSampleShadingEnable(true)
+					.setMinSampleShading(0.25);
 
 				typedef vk::ColorComponentFlagBits C;
 				auto color_blend_attachment_state = vk::PipelineColorBlendAttachmentState()
@@ -507,7 +508,7 @@ namespace Vizor
 				_renderer = std::thread([&]{
 					while (true) {
 						try {
-							//_camera.model = Numerics::Transforms::rotate(Numerics::radians((double)_timer.time()), Vec3{0, 0, 1});
+							_camera.model = Numerics::Transforms::rotate(Numerics::radians((double)_timer.time()), Vec3{0, 0, 1});
 							update_uniform_buffer();
 							
 							draw_frame();

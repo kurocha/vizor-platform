@@ -73,10 +73,10 @@ void main()
 {
 	int iterations = iterate(mapping);
 	
-	if (iterations == max_iterations) {
+	if (iterations == max_iterations || iterations <= 10) {
 		color = vec4(0.0);
 	} else {
 		float s = float(iterations) / float(max_iterations);
-		color = vec4(hsv2rgb(vec3(s/4.0, 0.9, s)), 1.0);
+		color = vec4(hsv2rgb(vec3(s, 1.0, 1.0)), 1.0);
 	}
 }
